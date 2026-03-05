@@ -14,12 +14,12 @@ services:
     networks:
       - proxy
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "/dozzle", "healthcheck"]
-      interval: 3s
-      timeout: 30s
-      retries: 5
-      start_period: 30s
+    # healthcheck:
+    #   test: ["CMD", "/dozzle", "healthcheck"]
+    #   interval: 3s
+    #   timeout: 30s
+    #   retries: 5
+    #   start_period: 30s
     environment:
       DOZZLE_ENABLE_ACTIONS: true
       DOZZLE_ENABLE_SHELL: true

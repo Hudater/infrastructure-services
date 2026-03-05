@@ -1,13 +1,22 @@
 ---
 services:
   uptime:
-    image: louislam/uptime-kuma:latest
+    image: louislam/uptime-kuma:2
     container_name: uptime
     networks:
       - proxy # rename this to your custom docker network
     labels:
       traefik.enable: true
-      traefik.http.routers.uptime.middlewares: oauth@file
+      # public status page
+      # traefik.http.routers.uptime-status.rule: Host(`status.hudater.dev`) || Host(`status.${CF_DOMAIN}`)
+      traefik.http.routers.uptime-status.rule: Host(`status.hudater.dev`)
+      traefik.http.routers.uptime-status.entrypoints: https
+      traefik.http.routers.uptime-status.tls: true
+      # admin dash
+      traefik.http.routers.uptime-admin.rule: Host(`uptime.${CF_DOMAIN}`)
+      traefik.http.routers.uptime-admin.entrypoints: https
+      traefik.http.routers.uptime-admin.tls: true
+      traefik.http.routers.uptime-admin.middlewares: oauth@file
     volumes:
       - "${CFG_DIR}/uptime:/app/data"
       - /etc/localtime:/etc/localtime:ro

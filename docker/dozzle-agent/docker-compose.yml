@@ -10,12 +10,12 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     ports:
       - 7007:7007
-    healthcheck:
-      test: ["CMD", "/dozzle", "healthcheck"]
-      interval: 5s
-      retries: 5
-      start_period: 5s
-      start_interval: 5s
+    # healthcheck:
+    #   test: ["CMD", "/dozzle", "healthcheck"]
+    #   interval: 5s
+    #   retries: 5
+    #   start_period: 5s
+    #   start_interval: 5s
     environment:
       - DOZZLE_HOSTNAME=${HOSTNAME}
     networks:

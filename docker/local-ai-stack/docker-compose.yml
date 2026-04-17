@@ -42,7 +42,6 @@ services:
 
 
 volumes:
-  ollama_data:
   webui_data:
 networks:
   proxy:

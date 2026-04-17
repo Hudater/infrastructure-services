@@ -74,3 +74,9 @@ docker exec -it ai-ollama ollama pull gemma4:e2b
 docker exec -it ai-ollama ollama pull gemma4:26b-a4b-it-q4_K_M
 ```
 
+## Qwen
+
+```bash
+docker exec -it ai-ollama ollama pull qwen3.6:35b-a3b-q4_K_M
+```
+

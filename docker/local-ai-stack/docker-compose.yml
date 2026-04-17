@@ -1,30 +1,5 @@
 ---
 services:
-  # local-ai-stack:
-  #   environment:
-  #     - PUID=${PUID}
-  #     - PGID=${PGID}
-  #     - TZ=${TZ}
-  #     - HOSTNAME=${HOSTNAME}
-  #   image: MAINTAINER/IMAGE:latest
-  #   container_name: "local-ai-stack-${HOSTNAME}" #
-  #   hostname: "local-ai-stack-${HOSTNAME}" #
-  #   env_file:
-  #     - "${BAK_CFG_DIR}/local-ai-stack/.env"
-  #   restart: unless-stopped
-  #   volumes:
-  #     - "${CFG_DIR}/local-ai-stack:/config" #
-  #   ports:
-  #     - 80:80 #
-  #   networks:
-  #     - proxy
-  #   labels:
-  #     traefik.enable: true
-  #     traefik.http.services.local-ai-stack.loadbalancer.server.port: portNumber #
-  #     traefik.http.routers.local-ai-stack.middlewares: oauth@file #add this to any container you want to use the Authentik web proxy
-  #     traefik.http.routers.local-ai-stack.rule: Host(`local-ai-stack.${CF_DOMAIN}`)
-  #     dev.quenary.tugtainer.protected: True #tugtainer ignore label `https://github.com/Quenary/tugtainer?tab=readme-ov-file#custom-labels`
-
   ollama:
     image: ollama/ollama:rocm
     container_name: ai-ollama
@@ -35,7 +10,7 @@ services:
     environment:
       - HSA_OVERRIDE_GFX_VERSION=11.0.0
     volumes:
-      - ollama_data:/root/.ollama
+      - /mnt/ai/local-models:/root/.ollama
     ports:
       - "11434:11434"
     group_add:

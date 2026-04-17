@@ -8,17 +8,17 @@ services:
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
-    # ports:
-    #   - 8001:8000
-    #   - 9001:9000
+    ports:
+      - 8001:8000
+      - 9001:9000
     volumes:
       - "${CFG_DIR}/portainer_ee:/data"
       - /etc/localtime:/etc/localtime:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
     labels:
       traefik.enable: true
-      traefik.http.services.portainer.loadbalancer.server.port: 9000
-      traefik.http.routers.portainer.middlewares: oauth@file #add this to any container you want to use the Authentik web proxy
+      traefik.http.services.portainer-ee.loadbalancer.server.port: 9000
+      traefik.http.routers.portainer-ee.middlewares: oauth@file #add this to any container you want to use the Authentik web proxy
 
 networks:
   proxy:

@@ -1,0 +1,21 @@
+---
+services:
+  tasktrove:
+    image: ghcr.io/dohsimpson/tasktrove:latest
+    container_name: "tasktrove-${HOSTNAME}" #
+    hostname: "tasktrove-${HOSTNAME}" #
+    restart: unless-stopped
+    volumes:
+      - "${BAK_CFG_DIR}/tasktrove:/app/data"
+    ports:
+      - "3000:3000"
+    networks:
+      - proxy
+    labels:
+      traefik.enable: true
+      traefik.http.routers.tasktrove.middlewares: oauth@file #add this to any container you want to use the Authentik web proxy
+      traefik.http.routers.tasktrove.rule: Host(`tasktrove.${CF_DOMAIN}`)
+
+networks:
+  proxy:
+    external: true

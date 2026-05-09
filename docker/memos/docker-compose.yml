@@ -1,0 +1,23 @@
+---
+services:
+  memos:
+    image: neosmemo/memos:latest
+    container_name: "memos-${HOSTNAME}" #
+    hostname: "memos-${HOSTNAME}" #
+    env_file:
+      - "${BAK_CFG_DIR}/memos/.env"
+    restart: unless-stopped
+    volumes:
+      - "${BAK_CFG_DIR}/memos/data:/var/opt/memos" #
+    ports:
+      - 5230:5230
+    networks:
+      - proxy
+    labels:
+      traefik.enable: true
+      traefik.http.routers.memos.middlewares: oauth@file #add this to any container you want to use the Authentik web proxy
+      traefik.http.routers.memos.rule: Host(`memos.${CF_DOMAIN}`)
+
+networks:
+  proxy:
+    external: true

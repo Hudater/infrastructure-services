@@ -1,0 +1,30 @@
+---
+services:
+  checkle:
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - HOSTNAME=${HOSTNAME}
+    image: MAINTAINER/IMAGE:latest
+    container_name: "checkle-${HOSTNAME}" #
+    hostname: "checkle-${HOSTNAME}" #
+    env_file:
+      - "${BAK_CFG_DIR}/checkle/.env"
+    restart: unless-stopped
+    volumes:
+      - "${CFG_DIR}/checkle:/config" #
+    ports:
+      - 80:80 #
+    networks:
+      - proxy
+    labels:
+      traefik.enable: true
+      traefik.http.services.checkle.loadbalancer.server.port: portNumber #
+      traefik.http.routers.checkle.middlewares: oauth@file #add this to any container you want to use the Authentik web proxy
+      traefik.http.routers.checkle.rule: Host(`checkle.${CF_DOMAIN}`)
+      dev.quenary.tugtainer.protected: True #tugtainer ignore label `https://github.com/Quenary/tugtainer?tab=readme-ov-file#custom-labels`
+
+networks:
+  proxy:
+    external: true

@@ -1,0 +1,48 @@
+---
+services:
+  kanba:
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - HOSTNAME=${HOSTNAME}
+    image: MAINTAINER/IMAGE:latest
+    container_name: "kanba-${HOSTNAME}" #
+    hostname: "kanba-${HOSTNAME}" #
+    env_file:
+      - "${BAK_CFG_DIR}/kanba/.env"
+    restart: unless-stopped
+    volumes:
+      - "${CFG_DIR}/kanba:/config" #
+    ports:
+      - 80:80 #
+    networks:
+      - proxy
+    labels:
+      traefik.enable: true
+      traefik.http.services.kanba.loadbalancer.server.port: portNumber #
+      traefik.http.routers.kanba.middlewares: oauth@file #add this to any container you want to use the Authentik web proxy
+      traefik.http.routers.kanba.rule: Host(`kanba.${CF_DOMAIN}`)
+      dev.quenary.tugtainer.protected: True #tugtainer ignore label `https://github.com/Quenary/tugtainer?tab=readme-ov-file#custom-labels`
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: kanba-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: kanba_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d kanba_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+networks:
+  proxy:
+    external: true

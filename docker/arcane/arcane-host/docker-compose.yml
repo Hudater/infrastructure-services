@@ -1,0 +1,25 @@
+---
+services:
+  arcane:
+    image: ghcr.io/getarcaneapp/arcane:latest
+    container_name: "arcane-${HOSTNAME}" #
+    hostname: "arcane-${HOSTNAME}" #
+    env_file:
+      - "${BAK_CFG_DIR}/arcane/.env"
+    restart: unless-stopped
+    volumes:
+      - "${CFG_DIR}/arcane:/app/data"
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${COMPOSE_DIR}:${COMPOSE_DIR}
+    ports:
+      - 3552:3552
+    networks:
+      - proxy
+    labels:
+      traefik.enable: true
+      traefik.http.routers.arcane.middlewares: oauth@file #add this to any container you want to use the Authentik web proxy
+      traefik.http.routers.arcane.rule: Host(`arcane.${CF_DOMAIN}`)
+
+networks:
+  proxy:
+    external: true

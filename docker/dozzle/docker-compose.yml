@@ -23,7 +23,7 @@ services:
     environment:
       DOZZLE_ENABLE_ACTIONS: true
       DOZZLE_ENABLE_SHELL: true
-      DOZZLE_REMOTE_AGENT: "${MD_SRV_LOCAL_IP}:7007"
+      DOZZLE_REMOTE_AGENT: "${MD_SRV_LOCAL_IP}:7007,${OCI_ZRH_ARM_LOCAL_IP}:7007"
 
 networks:
   proxy:    # rename this to your custom docker network.

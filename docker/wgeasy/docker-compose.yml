@@ -5,9 +5,9 @@ services:
   wgeasy:
     environment:
       - HOSTNAME=${HOSTNAME}
-      - WG_HOST=wgeasy.${CF_DOMAIN}
+      - WG_HOST=wgeasy.${ACCESS_DOMAIN}
       # - PASSWORD=${WG_CL_PASS} ## running behind authentik so don't need password
-      - WG_PORT=${WG_PRI_PORT}
+      - WG_PORT=51820
       - WG_DEFAULT_DNS=9.9.9.9, 1.1.1.1
       - WG_ALLOWED_IPS=0.0.0.0/0, ::/0
       - UI_TRAFFIC_STATS=true
@@ -28,6 +28,7 @@ services:
       traefik.enable: true   # Enable Traefik reverse proxy for the Traefik dashboard.
       traefik.http.services.wgeasy.loadbalancer.server.port: 51821
       traefik.http.routers.wgeasy.middlewares: oauth@file #add this to any container you want to use the Authentik web proxy
+      traefik.http.routers.wgeasy.rule: Host(`wgeasy.${CF_DOMAIN}`) # Define the subdomain for the traefik dashboard.
     restart: unless-stopped
     cap_add:
       - NET_ADMIN

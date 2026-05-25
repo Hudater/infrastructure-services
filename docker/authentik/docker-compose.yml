@@ -1,7 +1,7 @@
 ---
 services:
   authentik:
-    image: ghcr.io/goauthentik/server:2025.8.4
+    image: ghcr.io/goauthentik/server:${AUTHENTIK_TAG:-2026.5.0}
     container_name: authentik-server
     command: server
     env_file:
@@ -12,6 +12,7 @@ services:
       - traefik.http.routers.authentik.rule=Host(`authentik.${CF_DOMAIN}`) || HostRegexp(`{subdomain:[A-Za-z0-9](?:[A-Za-z0-9\-]{0,61}[A-Za-z0-9])?}.${CF_DOMAIN}`) && PathPrefix(`/outpost.goauthentik.io/`)
     volumes:
       - "${BAK_CFG_DIR}/authentik/authentik_server-media:/media"
+      - "${BAK_CFG_DIR}/authentik/authentik-server-data:/data"
       - "${BAK_CFG_DIR}/authentik/authentik_server_custom-templates:/templates"
     depends_on:
       - authentik-db
@@ -19,9 +20,14 @@ services:
     restart: unless-stopped
     networks:
       - proxy
+    ports:
+      - ${COMPOSE_PORT_HTTP:-9000}:9000
+      - ${COMPOSE_PORT_HTTPS:-9443}:9443
+    shm_size: 512mb
+
 
   authentik-worker:
-    image: ghcr.io/goauthentik/server:2025.8.4
+    image: ghcr.io/goauthentik/server:${AUTHENTIK_TAG:-2026.5.0}
     container_name: authentik-worker
     command: worker
     env_file:
@@ -31,6 +37,7 @@ services:
       - /run/docker.sock:/run/docker.sock
       - "${BAK_CFG_DIR}/authentik/authentik_worker-media:/media"
       - "${BAK_CFG_DIR}/authentik/authentik_worker-certs:/certs"
+      - "${BAK_CFG_DIR}/authentik/authentik-worker-data:/data"
       - "${BAK_CFG_DIR}/authentik/authentik_worker_custom-templates:/templates"
     depends_on:
       - authentik-db
@@ -38,6 +45,7 @@ services:
     restart: unless-stopped
     networks:
       - proxy
+    shm_size: 512mb
 
   authentik-redis:
     image: docker.io/library/redis:latest
@@ -50,24 +58,24 @@ services:
       retries: 5
       timeout: 3s
     volumes:
-      - "${DB_CFG_DIR}/authentik_redis/:/data"
+      - authentik_redis:/data
     restart: unless-stopped
     networks:
       - proxy
 
   authentik-db:
-    image: docker.io/library/postgres:17
+    image: docker.io/library/postgres:16-alpine
     container_name: authentik-db
     env_file:
       - "${BAK_CFG_DIR}/authentik/.env"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
       start_period: 30s
-      interval: 10s
-      timeout: 10s
+      interval: 30s
+      timeout: 5s
       retries: 5
     volumes:
-      - "${DB_CFG_DIR}/authentik_postgres/:/var/lib/postgresql/data"
+      - authentik_postgres:/var/lib/postgresql/data
     restart: unless-stopped
     networks:
       - proxy
@@ -75,3 +83,9 @@ services:
 networks:
   proxy:
     external: true
+
+volumes:
+  authentik_postgres:
+    driver: local
+  authentik_redis:
+    driver: local

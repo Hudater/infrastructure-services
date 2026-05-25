@@ -3,11 +3,13 @@ services:
     postgresql:
         image: postgres:17
         container_name: "keycloak-postgres"
+        restart: always
         healthcheck:
             test: ["CMD-SHELL", "pg_isready -U keycloak"]
             interval: 30s
             timeout: 5s
-            retries: 5
+            retries: 10
+            start_period: 30s
         env_file:
             - "${BAK_CFG_DIR}/keycloak/.env"
         volumes:
@@ -31,6 +33,7 @@ services:
             interval: 60s
             timeout: 5s
             retries: 5
+            start_period: 120s
         depends_on:
             postgresql:
                 condition: service_healthy
@@ -55,7 +58,7 @@ services:
                 condition: service_healthy
         env_file:
             - "${BAK_CFG_DIR}/oauth2-proxy/.env"
-        restart: unless-stopped
+        restart: always
         volumes:
             - "${CFG_DIR}/oauth2-proxy/templates:/templates"
             - "${BAK_CFG_DIR}/oauth2-proxy/sign_in.html:/templates/sign_in.html"

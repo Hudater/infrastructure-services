@@ -76,7 +76,7 @@ services:
       retries: 5
       timeout: 3s
     volumes:
-      - "${DB_CFG_DIR}/traefik_redis/:/data"
+      - "traefik_redis:/data"
     restart: unless-stopped
     networks:
       - proxy
@@ -93,6 +93,8 @@ services:
     restart: unless-stopped
     volumes:
       - "${BAK_CFG_DIR}/traefik/configuration.yml:/config/configuration.yml:ro" #
+      - "${CFG_DIR}/trala/config:/config"
+      - "${CFG_DIR}/trala/icons:/icons"
     # ports:
     #   - 80:80 #
     networks:
@@ -107,5 +109,6 @@ services:
 networks:
   proxy: # rename this to your custom docker network.
     external: true
-# volumes:
-#   traefik-logs:
+
+volumes:
+  traefik_redis:

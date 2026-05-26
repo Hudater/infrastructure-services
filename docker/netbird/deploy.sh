@@ -1,3 +1,3 @@
 #!/bin/bash
-mkdir -p "${CFG_DIR}"/netbird/coturn
-docker compose up -d
+mkdir -p "${BAK_CFG_DIR}"/netbird/certs
+docker compose up -d --force-recreate --remove-orphans

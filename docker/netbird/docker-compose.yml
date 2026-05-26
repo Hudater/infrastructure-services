@@ -1,150 +1,145 @@
----
 services:
-  #UI dashboard
+  # UI dashboard
   dashboard:
     image: netbirdio/dashboard:latest
+    container_name: netbird-dashboard
     restart: unless-stopped
-    container_name: netbird-dash
-    environment:
-      # Endpoints
-      - NETBIRD_MGMT_API_ENDPOINT=https://netbird.${CF_DOMAIN}:443
-      - NETBIRD_MGMT_GRPC_API_ENDPOINT=https://netbird.${CF_DOMAIN}:443
-      # OIDC
-      - AUTH_AUDIENCE=${NETBIRD_AUTH_CLIENT_ID_SHELL_ENV}
-      - AUTH_CLIENT_ID=${NETBIRD_AUTH_CLIENT_ID_SHELL_ENV}
-      - AUTH_CLIENT_SECRET=
-      - AUTH_AUTHORITY=https://zitadel.${CF_DOMAIN}
-      - USE_AUTH0=false
-      - AUTH_SUPPORTED_SCOPES=openid profile email offline_access api
-      - AUTH_REDIRECT_URI=/auth
-      - AUTH_SILENT_REDIRECT_URI=/silent-auth
-      - NETBIRD_TOKEN_SOURCE=accessToken
-      # SSL
-      - NGINX_SSL_PORT=443
-      # Letsencrypt
-      - LETSENCRYPT_DOMAIN=
-      - LETSENCRYPT_EMAIL=
-    volumes:
-      - netbird-letsencrypt:/etc/letsencrypt/
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "500m"
-        max-file: "2"
-    networks:
-      - proxy
+    networks: [netbird, proxy]
+    env_file:
+      - "${BAK_CFG_DIR}/netbird/dashboard.env"
+    ports:
+      - '8090:80'
     labels:
       - traefik.enable=true
       - traefik.http.routers.netbird-dashboard.rule=Host(`netbird.${CF_DOMAIN}`)
+      - traefik.http.routers.netbird-dashboard.entrypoints=https
+      - traefik.http.routers.netbird-dashboard.tls=true
+      - traefik.http.routers.netbird-dashboard.priority=1
       - traefik.http.services.netbird-dashboard.loadbalancer.server.port=80
-
-  # Signal
-  signal:
-    image: netbirdio/signal:latest
-    restart: unless-stopped
-    container_name: netbird-signal
-    volumes:
-      - netbird-signal:/var/lib/netbird
     logging:
       driver: "json-file"
       options:
         max-size: "500m"
         max-file: "2"
-    networks:
-      - proxy
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.netbird-signal.rule=Host(`netbird.${CF_DOMAIN}`) && PathPrefix(`/signalexchange.SignalExchange/`)
-      - traefik.http.services.netbird-signal.loadbalancer.server.port=80
-      - traefik.http.services.netbird-signal.loadbalancer.server.scheme=h2c
 
-  # Relay
-  relay:
-    image: netbirdio/relay:latest
+  # Combined server (Management + Signal + Relay + STUN)
+  netbird-server:
+    image: netbirdio/netbird-server:latest
+    container_name: netbird-server
     restart: unless-stopped
-    container_name: netbird-relay
-    environment:
-    - NB_LOG_LEVEL=info
-    - NB_LISTEN_ADDRESS=:33080
-    - NB_EXPOSED_ADDRESS=netbird.${CF_DOMAIN}:33080
-    - NB_AUTH_SECRET=${NETBIRD_NB_AUTH_SECRET}
+    networks: [netbird, proxy]
+    env_file:
+      - "${BAK_CFG_DIR}/netbird/dashboard.env"
     ports:
-      - 33080:33080
+      - '3479:3478/udp'
+    volumes:
+      - netbird_data:/var/lib/netbird
+      - "${BAK_CFG_DIR}/netbird/config.yaml:/etc/netbird/config.yaml"
+    command: ["--config", "/etc/netbird/config.yaml"]
+    labels:
+      - traefik.enable=true
+      # gRPC router (needs h2c backend for HTTP/2 cleartext)
+      - traefik.http.routers.netbird-grpc.rule=Host(`netbird.${CF_DOMAIN}`) && (PathPrefix(`/signalexchange.SignalExchange/`) || PathPrefix(`/management.ManagementService/`))
+      - traefik.http.routers.netbird-grpc.entrypoints=https
+      - traefik.http.routers.netbird-grpc.tls=true
+      - traefik.http.routers.netbird-grpc.service=netbird-server-h2c
+      - traefik.http.routers.netbird-grpc.priority=10
+      # Backend router (relay, WebSocket, API, OAuth2)
+      - traefik.http.routers.netbird-backend.rule=Host(`netbird.${CF_DOMAIN}`) && (PathPrefix(`/relay`) || PathPrefix(`/ws-proxy/`) || PathPrefix(`/api`) || PathPrefix(`/oauth2`))
+      - traefik.http.routers.netbird-backend.entrypoints=https
+      - traefik.http.routers.netbird-backend.tls=true
+      - traefik.http.routers.netbird-backend.service=netbird-server
+      # - traefik.http.routers.netbird-backend.priority=5
+      # Services
+      - traefik.http.services.netbird-server.loadbalancer.server.port=80
+      - traefik.http.services.netbird-server-h2c.loadbalancer.server.port=80
+      - traefik.http.services.netbird-server-h2c.loadbalancer.server.scheme=h2c
     logging:
       driver: "json-file"
       options:
         max-size: "500m"
         max-file: "2"
-    networks:
-      - proxy
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.netbird-relay.rule=Host(`netbird.${CF_DOMAIN}`) && PathPrefix(`/relay`)
-      - traefik.http.services.netbird-relay.loadbalancer.server.port=33080
 
-
-  # Management
-  management:
-    image: netbirdio/management:latest
+  # NetBird Proxy - exposes internal resources to the internet
+  proxy:
+    image: netbirdio/reverse-proxy:latest
+    container_name: netbird-proxy
+    ports:
+    - 51820:51820/udp
     restart: unless-stopped
-    container_name: netbird-mgmt
+    networks: [netbird, proxy]
     depends_on:
-      - dashboard
+      netbird-server:
+        condition: service_started
+    env_file:
+      - "${BAK_CFG_DIR}/netbird/proxy.env"
     volumes:
-      - netbird-mgmt:/var/lib/netbird
-      - netbird-letsencrypt:/etc/letsencrypt:ro
-      - "${BAK_CFG_DIR}/netbird/management.json:/etc/netbird/management.json"
-    command: [
-      "--port", "443",
-      "--log-file", "console",
-      "--log-level", "info",
-      "--disable-anonymous-metrics=false",
-      "--single-account-mode-domain=netbird.${CF_DOMAIN}",
-      "--dns-domain=netbird.selfhosted"
-      ]
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "500m"
-        max-file: "2"
-    environment:
-      - NETBIRD_STORE_ENGINE_POSTGRES_DSN=
-      - NETBIRD_STORE_ENGINE_MYSQL_DSN=
-    networks:
-      - proxy
+      - "${BAK_CFG_DIR}/netbird/certs/${CF_DOMAIN}:/certs"
     labels:
+      # TCP passthrough for *.netbird.${CF_DOMAIN}
       - traefik.enable=true
-      - traefik.http.routers.netbird-api.rule=Host(`netbird.${CF_DOMAIN}`) && PathPrefix(`/api`)
-      - traefik.http.routers.netbird-api.service=netbird-api
-      - traefik.http.services.netbird-api.loadbalancer.server.port=443
-      - traefik.http.routers.netbird-management.rule=Host(`netbird.${CF_DOMAIN}`) && PathPrefix(`/management.ManagementService/`)
-      - traefik.http.routers.netbird-management.service=netbird-management
-      - traefik.http.services.netbird-management.loadbalancer.server.port=443
-      - traefik.http.services.netbird-management.loadbalancer.server.scheme=h2c
-
-  # Coturn
-  coturn:
-    image: coturn/coturn:latest
-    restart: unless-stopped
-    container_name: netbird-coturn
-    domainname: netbird.${CF_DOMAIN} # only needed when TLS is enabled
-    volumes:
-      - "${BAK_CFG_DIR}/netbird/turnserver.conf:/etc/turnserver.conf:ro"
-      - "${CFG_DIR}/netbird/coturn:/var/lib/coturn"
-    network_mode: host
-    command:
-      - -c /etc/turnserver.conf
+      - traefik.tcp.routers.proxy-passthrough.entrypoints=https 
+      - traefik.tcp.routers.proxy-passthrough.rule=HostSNI(`*`)
+      - traefik.tcp.routers.proxy-passthrough.tls.passthrough=true
+      - traefik.tcp.routers.proxy-passthrough.service=proxy-tls
+      - traefik.tcp.routers.proxy-passthrough.priority=1
+      - traefik.tcp.services.proxy-tls.loadbalancer.server.port=8443
     logging:
       driver: "json-file"
       options:
         max-size: "500m"
         max-file: "2"
+
+  certs-dumper:
+    image: ldez/traefik-certs-dumper:latest
+    restart: unless-stopped
+    container_name: netbird-certs-dumper
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    # entrypoint:
+    #   - "/bin/sh"
+    #   - "-c"
+    #   - |
+    #     while true; do
+    #       traefik-certs-dumper file \
+    #         --version v3 \
+    #         --source /data/acme.json \
+    #         --domain "*.domain.com" \
+    #         --crt-name fullchain.pem \
+    #         --key-name privkey.pem \
+    #         --output /output
+    #       sleep 12h
+    #     done
+    # entrypoint: sh -c '
+    #   while ! [ -e /data/acme.json ]
+    #   || ! [ `jq ".[] | .Certificates | length" /data/acme.json | jq -s "add" ` != 0 ]; do
+    #   sleep 1
+    #   ; done
+    #   && traefik-certs-dumper file --version v3 --watch
+    #   --source /data/acme.json --domain-subdir --crt-name=fullchain --crt-ext=.pem --key-name=privkey --key-ext=.pem --dest /output --post-hook "chown -R $PUID:$PGID /output"'
+    entrypoint: sh -c '
+      while ! [ -e /data/acme.json ]
+      || ! [ `jq ".[] | .Certificates | length" /data/acme.json | jq -s "add" ` != 0 ]; do
+      sleep 1
+      ; done
+      && traefik-certs-dumper file --version v3 --watch
+      --source /data/acme.json --domain-subdir --crt-name=tls --crt-ext=.crt --key-name=tls --key-ext=.key --dest /output --post-hook "chown -R $PUID:$PGID /output"'
+    volumes:
+      - "${BAK_CFG_DIR}/traefik:/data:ro"
+      - "${BAK_CFG_DIR}/netbird/certs:/output"
 
 volumes:
-  netbird-mgmt:
-  netbird-signal:
-  netbird-letsencrypt:
+  netbird_data:
+  netbird_proxy_certs:
 
 networks:
+  netbird:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24
+          gateway: 172.30.0.1
   proxy:
     external: true

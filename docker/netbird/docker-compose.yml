@@ -31,7 +31,7 @@ services:
     env_file:
       - "${BAK_CFG_DIR}/netbird/dashboard.env"
     ports:
-      - '3479:3478/udp'
+      - '3478:3478/udp'
     volumes:
       - netbird_data:/var/lib/netbird
       - "${BAK_CFG_DIR}/netbird/config.yaml:/etc/netbird/config.yaml"

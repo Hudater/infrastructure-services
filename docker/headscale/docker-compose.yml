@@ -36,7 +36,7 @@ services:
       - "${BAK_CFG_DIR}/headscale/.env"
     command: serve
     ports:
-      - "3478:3478/udp" # stun server
+      - "3479:3478/udp" # stun server
       # - "50443:50443" # grpc
       #- "41641:41641/udp" # used by tailscale wireguard on the client so exposing it helps in direct connections
     #   - '8080:8080'

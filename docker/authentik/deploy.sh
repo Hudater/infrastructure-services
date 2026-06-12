@@ -3,4 +3,4 @@ CREATE_DIRS=( "${BAK_CFG_DIR}"/authentik/{authentik-worker-data,authentik-server
 mkdir -p "${CREATE_DIRS[@]}"
 # ls -alh "$BAK_CFG_DIR"/authentik/ "$DB_CFG_DIR"
 # ls -alh "${CREATE_DIRS[@]}"
-docker compose up -d
+docker compose up -d --force-recreate --pull always

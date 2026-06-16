@@ -1,0 +1,49 @@
+---
+services:
+  mcphub:
+    image: samanhappy/mcphub:latest
+    container_name: "mcphub-${HOSTNAME}" #
+    hostname: "mcphub-${HOSTNAME}" #
+    env_file:
+      - "${BAK_CFG_DIR}/mcphub/.env"
+    restart: unless-stopped
+    volumes:
+      - "${BAK_CFG_DIR}/mcphub/mcp_settings.json:/app/mcp_settings.json"
+      # - "${BAK_CFG_DIR}/mcphub/app:/app"
+    ports:
+      - 3080:3000
+    networks:
+      - proxy
+    labels:
+      traefik.enable: true
+      traefik.http.routers.mcphub.middlewares: oauth@file #add this to any container you want to use the Authentik web proxy
+
+  mcp-netbird:
+    image: xnetadmin/mcp-netbird:latest
+    container_name: mcp-netbird
+    restart: unless-stopped
+    command: ["-t", "sse", "-sse-address", "0.0.0.0:8001"]
+    ports:
+      - 3081:8001
+    env_file:
+      - "${BAK_CFG_DIR}/mcphub/netbird.env"
+    networks:
+      - proxy
+
+  terraform-mcp:
+    image: hashicorp/terraform-mcp-server:latest
+    container_name: terraform-mcp
+    restart: unless-stopped
+    environment:
+      - TRANSPORT_MODE=streamable-http
+      - TRANSPORT_HOST=0.0.0.0
+      - TRANSPORT_PORT=8080
+      - MCP_CORS_MODE=disabled
+    ports:
+      - "3082:8080"
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    external: true

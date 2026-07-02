@@ -1,0 +1,24 @@
+---
+services:
+  ddns-updater:
+    image: ghcr.io/qdm12/ddns-updater:latest
+    container_name: "ddns-updater-${HOSTNAME}" #
+    hostname: "ddns-updater-${HOSTNAME}" #
+    env_file:
+      - "${BAK_CFG_DIR}/ddns-updater/.env"
+    restart: unless-stopped
+    volumes:
+      - "${BAK_CFG_DIR}/ddns-updater:/updater/data" #
+    ports:
+      - 8612:8000 #
+    networks:
+      - proxy
+    labels:
+      traefik.enable: true
+      traefik.http.routers.ddns-updater.middlewares: oauth@file #add this to any container you want to use the Authentik web proxy
+      # traefik.http.routers.ddns-updater.rule: Host(`ddns-updater.${CF_DOMAIN}`)
+      # dev.quenary.tugtainer.protected: True #tugtainer ignore label `https://github.com/Quenary/tugtainer?tab=readme-ov-file#custom-labels`
+
+networks:
+  proxy:
+    external: true

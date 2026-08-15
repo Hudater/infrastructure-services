@@ -7,22 +7,27 @@ services:
       - HOSTNAME=${HOSTNAME}
       - WG_HOST=wgeasy.${ACCESS_DOMAIN}
       # - PASSWORD=${WG_CL_PASS} ## running behind authentik so don't need password
-      - WG_PORT=51820
+      - WG_PORT=51822
       - WG_DEFAULT_DNS=9.9.9.9, 1.1.1.1
       - WG_ALLOWED_IPS=0.0.0.0/0, ::/0
       - UI_TRAFFIC_STATS=true
       - UI_CHART_TYPE=1
       - UI_ENABLE_SORT_CLIENTS=true
       - ENABLE_PROMETHEUS_METRICS=true
-    image: ghcr.io/wg-easy/wg-easy:latest
+      - DISABLE_IPV6=true 
+      # - DISABLE_PASSWORD_AUTH=true
+      - INSECURE=true
+    image: ghcr.io/wg-easy/wg-easy:development
     container_name: "wg-${HOSTNAME}" #
     hostname: "wg-${HOSTNAME}" #
     networks:
       - proxy # rename this to your custom docker network
     volumes:
-      - ${BAK_CFG_DIR}/wgeasy:/etc/wireguard
+      # - ${BAK_CFG_DIR}/wgeasy:/etc/wireguard
+      - wg-easy_etc_wireguard:/etc/wireguard
+      - /lib/modules:/lib/modules:ro
     ports:
-      - "51820:51820/udp" #wg traffic port; match with WG_PORT
+      - "51822:51820/udp" #wg traffic port; match with WG_PORT
       - "51821:51821/tcp" #webgui port
     labels:
       traefik.enable: true   # Enable Traefik reverse proxy for the Traefik dashboard.
@@ -36,6 +41,12 @@ services:
     sysctls:
       - net.ipv4.ip_forward=1
       - net.ipv4.conf.all.src_valid_mark=1
+      - net.ipv6.conf.all.disable_ipv6=0
+      - net.ipv6.conf.all.forwarding=1
+      - net.ipv6.conf.default.forwarding=1
+
+volumes:
+  wg-easy_etc_wireguard:
 
 networks:
   proxy:    # rename this to your custom docker network.

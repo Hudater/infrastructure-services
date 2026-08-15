@@ -28,9 +28,16 @@ services:
       ## discovery ports
       - 7359:7359/udp #optional
       - 1900:1900/udp #optional
+      #devices:
+      #- "/dev/dri/pci-0000:09:00.0-render:/dev/dri/renderD128"
+      #- "/dev/dri/pci-0000:09:00.0-card:/dev/dri/card0"
     devices:
-      - /dev/dri/renderD128:/dev/dri/renderD128
-      - /dev/dri/card0:/dev/dri/card0
+      - source: /dev/dri/by-path/pci-0000:09:00.0-render
+        target: /dev/dri/renderD128
+        permissions: rwm
+      - source: /dev/dri/by-path/pci-0000:09:00.0-card
+        target: /dev/dri/card0
+        permissions: rwm
     restart: unless-stopped
 
   jellyseerr:

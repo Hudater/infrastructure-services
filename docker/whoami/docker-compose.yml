@@ -7,6 +7,8 @@ services:
         restart: unless-stopped
         networks:
             - proxy
+        ports:
+            - 12380:80 
         labels:
             traefik.enable: true
             # traefik.http.routers.whoami.middlewares: oauth@file #add this to any container you want to use the Authentik web proxy

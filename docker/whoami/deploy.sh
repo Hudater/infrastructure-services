@@ -1,5 +1,5 @@
 #!/bin/bash
-docker compose up -d
+docker compose up -d --force-recreate
 
 
 ### Credit: https://askubuntu.com/a/957278

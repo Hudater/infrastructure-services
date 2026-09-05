@@ -175,7 +175,7 @@ services:
     devices:
       - /dev/net/tun:/dev/net/tun
     volumes:
-      - "${BAK_CFG_DIR}/gluetun/Gluetun.conf:/gluetun/config.conf:ro"
+      - "${BAK_CFG_DIR}/gluetun/Gluetun_MdSrv.conf:/gluetun/config.conf:ro"
     env_file:
       - "${BAK_CFG_DIR}/gluetun/.env"
     ports:

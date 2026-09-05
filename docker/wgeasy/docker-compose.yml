@@ -17,7 +17,7 @@ services:
       - DISABLE_IPV6=true 
       # - DISABLE_PASSWORD_AUTH=true
       - INSECURE=true
-    image: ghcr.io/wg-easy/wg-easy:development
+    image: ghcr.io/wg-easy/wg-easy:15
     container_name: "wg-${HOSTNAME}" #
     hostname: "wg-${HOSTNAME}" #
     networks:
@@ -27,7 +27,7 @@ services:
       - wg-easy_etc_wireguard:/etc/wireguard
       - /lib/modules:/lib/modules:ro
     ports:
-      - "51822:51820/udp" #wg traffic port; match with WG_PORT
+      - "51822:51822/udp" #wg traffic port; match with WG_PORT
       - "51821:51821/tcp" #webgui port
     labels:
       traefik.enable: true   # Enable Traefik reverse proxy for the Traefik dashboard.

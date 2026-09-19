@@ -19,41 +19,41 @@ services:
       traefik.http.routers.karakeep.middlewares: oauth@file #add this to any container you want to use the Authentik web proxy
       traefik.http.services.karakeep.loadbalancer.server.port: 3000
 
-  karakeep-homedash:
-    image: ghcr.io/codejawn/karakeep-homedash:latest
-    container_name: karakeep-homedash
-    ports:
-      - "8595:8595"
-    volumes:
-      - "${BAK_CFG_DIR}/karakeep/data/db.db:/app/db.db:ro"
-      - "${BAK_CFG_DIR}/karakeep/karakeep-dash:/app/config"
-    networks:
-      - proxy
-    labels:
-      traefik.enable: true
-      traefik.http.routers.karadash.rule: Host(`kara-dash.${CF_DOMAIN}`)
-      traefik.http.routers.karadash.middlewares: oauth@file
-    restart: unless-stopped
-    depends_on:
-      - karakeep
+  # karakeep-homedash:
+  #   image: ghcr.io/codejawn/karakeep-homedash:latest
+  #   container_name: karakeep-homedash
+  #   ports:
+  #     - "8595:8595"
+  #   volumes:
+  #     - "${BAK_CFG_DIR}/karakeep/data/db.db:/app/db.db:ro"
+  #     - "${BAK_CFG_DIR}/karakeep/karakeep-dash:/app/config"
+  #   networks:
+  #     - proxy
+  #   labels:
+  #     traefik.enable: true
+  #     traefik.http.routers.karadash.rule: Host(`kara-dash.${CF_DOMAIN}`)
+  #     traefik.http.routers.karadash.middlewares: oauth@file
+  #   restart: unless-stopped
+  #   depends_on:
+  #     - karakeep
 
 
   chrome:
-    image: gcr.io/zenika-hub/alpine-chrome:latest
+    image: ghcr.io/karakeep-app/karakeep-chrome:release
     restart: unless-stopped
     container_name: karakeep-chrome
-    networks:
-      - proxy
+    init: true
     command:
-      - --no-sandbox
       - --disable-gpu
       - --disable-dev-shm-usage
-      - --remote-debugging-address=0.0.0.0
-      - --remote-debugging-port=9222
       - --hide-scrollbars
+      - --disable-blink-features=AutomationControlled
+      - --window-size=1440,900
+    networks:
+      - proxy
 
   meilisearch:
-    image: getmeili/meilisearch:v1.13.3
+    image: getmeili/meilisearch:v1.41.0
     restart: unless-stopped
     container_name: karakeep-meilisearch
     networks:
@@ -74,9 +74,23 @@ services:
     env_file:
       - "${BAK_CFG_DIR}/karakeep/karakeep-sync.env"
 
+  ollama:
+    image: ollama/ollama:latest
+    container_name: karakeep-ollama
+    restart: unless-stopped
+    environment:
+      - OLLAMA_KEEP_ALIVE=-1
+    volumes:
+      - ollama:/root/.ollama
+    ports:
+      - "11434:11434"
+    networks:
+      - proxy
+
 networks:
   proxy:
     external: true
 
 volumes:
   meilisearch:
+  ollama:

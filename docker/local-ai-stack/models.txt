@@ -1,0 +1,7 @@
+qwen3-embedding:0.6b
+qwen3.5:9b
+qwen3.6:35b-a3b
+devstral-small-2
+gemma4:e4b
+gemma4:12b
+gpt-oss:20b

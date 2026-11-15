@@ -1,0 +1,31 @@
+# Proxmox VE LXC resource configuration for Technitium DNS
+# Used by deploy.sh when running on a PVE host
+
+container:
+  id: 114                     # CT ID (set to 0 for next available)
+  hostname: technitium
+  unprivileged: true
+
+resources:
+  cpu: 1
+  ram: 512                    # MB
+  swap: 256                   # MB
+  disk: 4                     # GB
+  storage: local-lvm          # Proxmox storage pool
+
+network:
+  bridge: vmbr0
+  ip: dhcp                    # or e.g. 10.0.0.114/24
+  gateway: ""                 # required if static IP
+  vlan: ""
+
+os:
+  template: debian-12         # community script default
+
+install:
+  community_script: https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/ct/technitiumdns.sh
+
+# Post-install access
+access:
+  port: 5380
+  protocol: http

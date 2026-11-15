@@ -1,0 +1,26 @@
+# Bare Linux LXD resource configuration for Technitium DNS
+# Used by deploy.sh when running on a non-Proxmox Linux host (LXD)
+
+container:
+  name: technitium
+  image: ubuntu:26.04        # LXD image alias
+
+resources:
+  cpu: 2                     # CPU core limit (0 = unlimited)
+  ram: 1GB                 # Memory limit (LXD format: 512MB, 1GB, etc.)
+  disk: 5GB                  # Root disk size
+
+network:
+  device: eth0
+  bridge: lxdbr0             # LXD bridge (default from lxd init)
+  ip: dhcp                   # or static e.g. 10.0.0.114/24
+  gateway: ""                # required only for static IP
+
+install:
+  method: official
+  url: https://download.technitium.com/dns/install.sh
+
+# Post-install access
+access:
+  port: 5380
+  protocol: http

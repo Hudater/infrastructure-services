@@ -9,6 +9,7 @@ services:
     ports:
       - "${WAN_PRIVATE_IP:-10.60.0.154}:80:80"
       - "${WAN_PRIVATE_IP:-10.60.0.154}:443:443"
+      - "${NETBIRD_HOST_IP:-100.122.75.44}:8081:8080"
     volumes:
       - "${BAK_CFG_DIR}/traefik-public/:/etc/traefik/"
       - "${BAK_CFG_DIR}/traefik-public/logs:/var/log/traefik"

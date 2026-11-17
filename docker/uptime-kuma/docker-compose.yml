@@ -4,7 +4,8 @@ services:
     image: louislam/uptime-kuma:2
     container_name: uptime
     networks:
-      - proxy # rename this to your custom docker network
+      - proxy
+      - public-proxy
     labels:
       traefik.enable: true
       # public status page
@@ -30,4 +31,6 @@ services:
 
 networks:
   proxy:    # rename this to your custom docker network.
+    external: true
+  public-proxy:
     external: true

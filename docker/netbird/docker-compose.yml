@@ -4,7 +4,7 @@ services:
     image: netbirdio/dashboard:latest
     container_name: netbird-dashboard
     restart: unless-stopped
-    networks: [netbird, proxy]
+    networks: [netbird, public-proxy]
     env_file:
       - "${BAK_CFG_DIR}/netbird/dashboard.env"
     ports:
@@ -27,7 +27,7 @@ services:
     image: netbirdio/netbird-server:latest
     container_name: netbird-server
     restart: unless-stopped
-    networks: [netbird, proxy]
+    networks: [netbird, public-proxy]
     env_file:
       - "${BAK_CFG_DIR}/netbird/dashboard.env"
     ports:
@@ -67,7 +67,7 @@ services:
     ports:
     - 51820:51820/udp
     restart: unless-stopped
-    networks: [netbird, proxy]
+    networks: [netbird, public-proxy]
     depends_on:
       netbird-server:
         condition: service_started
@@ -141,5 +141,5 @@ networks:
       config:
         - subnet: 172.30.0.0/24
           gateway: 172.30.0.1
-  proxy:
+  public-proxy:
     external: true

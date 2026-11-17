@@ -1,0 +1,27 @@
+---
+services:
+  traefik-public:
+    container_name: traefik-public
+    image: traefik:latest
+    restart: always
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "${WAN_PRIVATE_IP:-10.60.0.154}:80:80"
+      - "${WAN_PRIVATE_IP:-10.60.0.154}:443:443"
+    volumes:
+      - "${BAK_CFG_DIR}/traefik-public/:/etc/traefik/"
+      - "${BAK_CFG_DIR}/traefik-public/logs:/var/log/traefik"
+    networks:
+      - public-proxy
+    env_file:
+      - "${BAK_CFG_DIR}/traefik-public/.env"
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+networks:
+  public-proxy:
+    external: true

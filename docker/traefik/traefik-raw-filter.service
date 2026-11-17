@@ -1,0 +1,13 @@
+# Drops spoofed NetBird CGNAT traffic on WAN (enp0s6) before Docker DNAT
+[Unit]
+Description=Traefik Raw Filter Drop Rule
+Before=docker.service
+Wants=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c 'iptables -t raw -C PREROUTING -i enp0s6 -d 100.64.0.0/10 -j DROP 2>/dev/null || iptables -t raw -I PREROUTING -i enp0s6 -d 100.64.0.0/10 -j DROP'
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

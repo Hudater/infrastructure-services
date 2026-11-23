@@ -8,7 +8,7 @@ services:
     volumes:
       - "${BAK_CFG_DIR}/tasktrove:/app/data"
     ports:
-      - "3000:3000"
+      - "3069:3000"
     networks:
       - proxy
     labels:

@@ -1,0 +1,4 @@
+inkling-2-mini cbdf3fa9dc50a4124977980f37da4f1fa764b0cfe800d275cd43d26ce2a81af4 https://huggingface.co/ggml-org/Inkling-2-Mini-GGUF/resolve/e8a2cecf0e78914f07cc27b9be711a9b2c7561d9/Inkling-2-Mini-IQ4_NL.gguf
+inkling-vision 233287272ec5ac39b4168677aba54a4c024f202410f5629fac1830e1059f8abb https://huggingface.co/ggml-org/Inkling-2-Mini-GGUF/resolve/e8a2cecf0e78914f07cc27b9be711a9b2c7561d9/mmproj-Inkling-2-Mini-Q8_0.gguf
+dolphin-llama3.1-8b 268390e07edd407ad93ea21a868b7ae995b5950e01cad0db9e1802ae5049d405 https://huggingface.co/bartowski/Dolphin3.0-Llama3.1-8B-GGUF/resolve/a6274707ba8c5f12d4521eabbce1b318bb2f27f5/Dolphin3.0-Llama3.1-8B-Q4_K_M.gguf
+dolphin-mistral-7b 6f3eab953bb44a2c309bcb52a81383e2cd05f197aa25d8a985ec8d9ffc664e1b https://huggingface.co/TheBloke/dolphin-2.6-mistral-7B-GGUF/resolve/013339bb7b2c778ece716864c5cd9d8247848760/dolphin-2.6-mistral-7b.Q4_K_M.gguf

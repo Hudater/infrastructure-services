@@ -1,0 +1,52 @@
+name: local-ai-stack
+
+services:
+  llama:
+    image: ghcr.io/ggml-org/llama.cpp:server-vulkan
+    restart: unless-stopped
+    devices: ["/dev/dri:/dev/dri"]
+    group_add: ["44", "993"]
+    command: ["--host", "0.0.0.0", "--port", "8080", "--models-preset", "/config/models.ini", "--models-max", "1", "--api-key-file", "/config/api-key"]
+    volumes:
+      - ${MODEL_ROOT:-/mnt/ai/local-models}:/weights:ro
+      - ${LLAMA_STATE_DIR:?run deploy.sh}:/config:ro
+    ports: ["${LLAMA_BIND_IP:?run deploy.sh}:11435:8080"]
+    networks: [proxy]
+    labels:
+      traefik.enable: "false"
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: ai-open-webui
+    restart: unless-stopped
+    depends_on: [llama]
+    env_file:
+      - ${LLAMA_STATE_DIR}/webui.env
+      - ${LLAMA_STATE_DIR}/oidc.env
+    environment:
+      ENABLE_OLLAMA_API: "false"
+      ENABLE_OPENAI_API: "true"
+      OPENAI_API_BASE_URLS: http://llama:8080/v1
+      WEBUI_URL: https://ai.${CF_DOMAIN:?set CF_DOMAIN}
+      ENABLE_LOGIN_FORM: "false"
+      ENABLE_PASSWORD_AUTH: "false"
+      ENABLE_OAUTH_SIGNUP: "true"
+      OAUTH_MERGE_ACCOUNTS_BY_EMAIL: "true"
+      OAUTH_AUTO_REDIRECT: "true"
+      OAUTH_PROVIDER_NAME: Authentik
+      OPENID_PROVIDER_URL: https://authentik.${CF_DOMAIN}/application/o/open-webui/.well-known/openid-configuration
+      OPENID_REDIRECT_URI: https://ai.${CF_DOMAIN}/oauth/oidc/callback
+    volumes: [webui_data:/app/backend/data]
+    ports: ["3033:8080"]
+    networks: [proxy]
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.open-webui.rule: Host(`ai.${CF_DOMAIN:?set CF_DOMAIN}`)
+      traefik.http.routers.open-webui.entrypoints: https
+      traefik.http.routers.open-webui.tls: "true"
+      traefik.http.routers.open-webui.service: open-webui
+      traefik.http.services.open-webui.loadbalancer.server.port: "8080"
+volumes:
+  webui_data:
+networks:
+  proxy:
+    external: true

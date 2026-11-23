@@ -1,0 +1,3 @@
+Run `./deploy.sh` on mdsrv. The Vulkan router serves one model at a time at `http://mdsrv.nb.lan:11435/v1` over NetBird. Its API key is in `~/.local/share/llama-cpp/api-key`. `--cached` starts only the router with weights already on disk, useful for staging. The seven existing Ollama manifests supply GGUF paths without duplicating their weights. New files use pinned Hugging Face revisions and SHA-256 checksums.
+
+Inkling 2 Mini uses host RAM plus GPU offload. The IQ4_NL weights alone are 17.6 GB. Dolphin Llama 3.1 8B and Dolphin Mistral 7B use Q4_K_M. Open WebUI keeps the existing named volume. Keep the old Ollama cache mounted while its weights are referenced.

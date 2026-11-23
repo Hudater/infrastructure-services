@@ -26,8 +26,15 @@ services:
   netbird-server:
     image: netbirdio/netbird-server:latest
     container_name: netbird-server
+    environment:
+      NB_MCP_ENABLED: "${NB_MCP_ENABLED:-true}"
     restart: unless-stopped
-    networks: [netbird, public-proxy]
+    networks:
+      netbird: {}
+      public-proxy: {}
+      proxy:
+        aliases: [netbird-mcp-backend]
+        gw_priority: -1
     env_file:
       - "${BAK_CFG_DIR}/netbird/dashboard.env"
     ports:
@@ -142,4 +149,6 @@ networks:
         - subnet: 172.30.0.0/24
           gateway: 172.30.0.1
   public-proxy:
+    external: true
+  proxy:
     external: true

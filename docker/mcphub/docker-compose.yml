@@ -1,49 +1,39 @@
----
 services:
   mcphub:
     image: samanhappy/mcphub:latest
-    container_name: "mcphub-${HOSTNAME}" #
-    hostname: "mcphub-${HOSTNAME}" #
-    env_file:
-      - "${BAK_CFG_DIR}/mcphub/.env"
     restart: unless-stopped
+    env_file:
+      - ${BAK_CFG_DIR}/mcphub/.env
+      - ${BAK_CFG_DIR}/mcphub/netbird.env
+    environment:
+      NETBIRD_MCP_URL: "http://netbird-mcp-backend/api/mcp"
+      MCPHUB_SETTING_PATH: /app/state/mcp_settings.json
     volumes:
-      - "${BAK_CFG_DIR}/mcphub/mcp_settings.json:/app/mcp_settings.json"
-      # - "${BAK_CFG_DIR}/mcphub/app:/app"
-    ports:
-      - 3080:3000
-    networks:
-      - proxy
+      - ${MCPHUB_STATE_DIR:?run deploy.sh}:/app/state
+    networks: [proxy]
     labels:
-      traefik.enable: true
-      traefik.http.routers.mcphub.middlewares: oauth@file #add this to any container you want to use the Authentik web proxy
-
-  mcp-netbird:
-    image: xnetadmin/mcp-netbird:latest
-    container_name: mcp-netbird
-    restart: unless-stopped
-    command: ["-t", "sse", "-sse-address", "0.0.0.0:8001"]
-    ports:
-      - 3081:8001
-    env_file:
-      - "${BAK_CFG_DIR}/mcphub/netbird.env"
-    networks:
-      - proxy
-
+      traefik.enable: "true"
+      traefik.docker.network: proxy
+      traefik.http.services.mcphub.loadbalancer.server.port: "3000"
+      traefik.http.routers.mcphub.rule: Host(`${MCPHUB_HOST:-mcphub.${CF_DOMAIN:?set CF_DOMAIN}}`)
+      traefik.http.routers.mcphub.entrypoints: https
+      traefik.http.routers.mcphub.tls: "true"
+      traefik.http.routers.mcphub.middlewares: oauth@file
+      traefik.http.routers.mcphub-agents.rule: Host(`${MCPHUB_HOST:-mcphub.${CF_DOMAIN:?set CF_DOMAIN}}`) && PathRegexp(`^/mcp/[a-zA-Z0-9_-]+$`)
+      traefik.http.routers.mcphub-agents.entrypoints: https
+      traefik.http.routers.mcphub-agents.tls: "true"
+      traefik.http.routers.mcphub-agents.priority: "100"
   terraform-mcp:
     image: hashicorp/terraform-mcp-server:latest
-    container_name: terraform-mcp
     restart: unless-stopped
     environment:
-      - TRANSPORT_MODE=streamable-http
-      - TRANSPORT_HOST=0.0.0.0
-      - TRANSPORT_PORT=8080
-      - MCP_CORS_MODE=disabled
-    ports:
-      - "3082:8080"
-    networks:
-      - proxy
-
+      TRANSPORT_MODE: streamable-http
+      TRANSPORT_HOST: 0.0.0.0
+      TRANSPORT_PORT: "8080"
+      MCP_CORS_MODE: disabled
+    networks: [proxy]
+    labels:
+      traefik.enable: "false"
 networks:
   proxy:
     external: true

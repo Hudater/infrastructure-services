@@ -16,10 +16,12 @@ services:
       # - "${BAK_CFG_DIR}/traefik/ban.html:/ban.html"
       - "${BAK_CFG_DIR}/traefik/logs:/var/log/traefik"
     networks:
-      - proxy # rename this to your custom docker network
+      - proxy
     #extra_hosts for nextcloud-aio
     # extra_hosts:
     #   - "host.docker.internal:host-gateway"
+    environment:
+      CF_DOMAIN: "${CF_DOMAIN:?set CF_DOMAIN}"
     env_file:
       - "${BAK_CFG_DIR}/traefik/.env"
     # environment:

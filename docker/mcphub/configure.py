@@ -23,6 +23,28 @@ for name, servers in {"docs": ["context7"], "terraform": ["terraform"], "network
     groups[name]["servers"] = [{"name": server, "tools": "all", "prompts": "all", "resources": "all"}
                                for server in servers if server in settings["mcpServers"]]
 settings["groups"] = list(groups.values())
+if (target.parent / "omniroute.env").is_file():
+    settings["mcpServers"].setdefault("omniroute", {
+        "type": "streamable-http",
+        "url": "http://omniroute:20128/api/mcp/stream",
+        "headers": {"Authorization": "Bearer ${OMNIROUTE_MCP_KEY}"},
+        "protocolNegotiation": "legacy",
+        "owner": "admin",
+        "id": str(uuid.uuid4()),
+    })
+    if "inference" not in groups:
+        settings["groups"].append({
+            "name": "inference", "id": str(uuid.uuid4()), "owner": "admin",
+            "servers": [{
+                "name": "omniroute",
+                "tools": [
+                    "omniroute_get_health", "omniroute_get_combo_metrics", "omniroute_list_combos",
+                    "omniroute_check_quota", "omniroute_list_models_catalog",
+                ],
+                "prompts": [],
+                "resources": [],
+            }],
+        })
 with tempfile.NamedTemporaryFile(dir=target.parent, mode="w", delete=False) as f:
     json.dump(settings, f, indent=2)
     f.write("\n")

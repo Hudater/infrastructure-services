@@ -5,6 +5,8 @@ services:
     env_file:
       - ${BAK_CFG_DIR}/mcphub/.env
       - ${BAK_CFG_DIR}/mcphub/netbird.env
+      - path: ${MCPHUB_STATE_DIR:?run deploy.sh}/omniroute.env
+        required: false
     environment:
       NETBIRD_MCP_URL: "http://netbird-mcp-backend/api/mcp"
       MCPHUB_SETTING_PATH: /app/state/mcp_settings.json
@@ -19,7 +21,7 @@ services:
       traefik.http.routers.mcphub.entrypoints: https
       traefik.http.routers.mcphub.tls: "true"
       traefik.http.routers.mcphub.middlewares: oauth@file
-      traefik.http.routers.mcphub-agents.rule: Host(`${MCPHUB_HOST:-mcphub.${CF_DOMAIN:?set CF_DOMAIN}}`) && PathRegexp(`^/mcp/[a-zA-Z0-9_-]+$`)
+      traefik.http.routers.mcphub-agents.rule: Host(`${MCPHUB_HOST:-mcphub.${CF_DOMAIN:?set CF_DOMAIN}}`) && (Path(`/mcp`) || PathPrefix(`/mcp/`))
       traefik.http.routers.mcphub-agents.entrypoints: https
       traefik.http.routers.mcphub-agents.tls: "true"
       traefik.http.routers.mcphub-agents.priority: "100"
